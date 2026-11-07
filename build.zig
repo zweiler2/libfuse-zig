@@ -6,6 +6,8 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const defines = b.addOptions();
+
     const linkage = b.option(std.builtin.LinkMode, "linkage", "Link mode to use (default: static)") orelse
         .static;
 
@@ -42,6 +44,9 @@ pub fn build(b: *std.Build) !void {
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
+        .imports = &.{
+            .{ .name = "defines", .module = defines.createModule() },
+        },
     });
 
     const lib = b.addLibrary(.{
@@ -75,6 +80,7 @@ pub fn build(b: *std.Build) !void {
         std.log.info("Enabling versioned libc symbols", .{});
         lib.setVersionScript(upstream_dep.path("lib/fuse_versionscript"));
     }
+    defines.addOption(bool, "LIBFUSE_BUILT_WITH_VERSIONED_SYMBOLS", versioned_symbols);
 
     {
         lib.root_module.addCMacro("FUSE_USE_VERSION", "317");
